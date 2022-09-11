@@ -56,20 +56,70 @@ module	rtcclock (
 	inout vccd1,	// User area 1 1.8V power
 	inout vssd1,	// User area 1 digital ground
 `endif
-	input	i_clk,
-	input	rst,
-	input	i_wb_cyc,
-	input 	i_wb_stb, 
-	input	i_wb_we,
-	input	[2:0]	i_wb_addr,
-	input	[31:0]	i_wb_data,
-	output	reg	[31:0]	o_data,
-	output	reg	[31:0]	o_sseg,
-	output	wire	[15:0]	o_led,
-	output	wire		o_interrupt, o_ppd,
-	output  wire	[15:0]	io_oeb,	
-	input			i_hack
+
+    // Wishbone Slave ports (WB MI A)
+     input wb_clk_i,
+     input wb_rst_i,
+     input wbs_stb_i,
+     input wbs_cyc_i,
+     input wbs_we_i,
+     input [3:0] wbs_sel_i,
+     input [31:0] wbs_dat_i,
+     input [31:0] wbs_adr_i,
+     output wbs_ack_o,
+     output [31:0] wbs_dat_o,
+
+     // Logic Analyzer Signals
+     input  [127:0] la_data_in,
+     output [127:0] la_data_out,
+     input  [127:0] la_oenb,
+
+     // IOs
+     input  [`MPRJ_IO_PADS-1:0] io_in,
+     output [`MPRJ_IO_PADS-1:0] io_out,
+     output [`MPRJ_IO_PADS-1:0] io_oeb,
+
+     // IRQ
+     output [2:0] irq
 );
+
+	wire	i_clk;
+	wire	rst;
+	wire	i_wb_cyc;
+	wire 	i_wb_stb; 
+	wire	i_wb_we;
+	wire	[2:0]	i_wb_addr;
+	wire	[31:0]	i_wb_data;
+	reg		[31:0]	o_data;
+	reg		[31:0]	o_sseg;
+	wire	[15:0]	o_led;
+	wire		o_interrupt;
+	wire 	o_ppd;
+	wire	i_hack;
+
+	assign i_clk = wb_clk_i;
+    assign rst = wb_rst_i;
+    
+    // MGMT SoC Wishbone Slave
+    
+    assign i_wb_cyc		= wbs_cyc_i;
+    assign i_wb_stb		= wbs_stb_i;
+    assign i_wb_we		= wbs_we_i;
+    assign i_wb_addr	= wbs_adr_i;
+    assign i_wb_data	= wbs_dat_o;
+    assign o_data		= wbs_dat_i;
+
+    // Logic Analyzer
+
+    assign i_hack		= la_data_in;
+    assign o_interrupt	= la_data_out;
+    assign o_sseg		= la_data_out;
+    
+
+    // IO Pads
+
+    assign o_sseg	= io_out;
+    assign o_ppd	= io_out;
 
 	parameter	DEFAULT_SPEED = 32'd2814750; //2af31e = 2^48 / 100e6 MHz
 	reg	[31:0]	stopwatch, ckspeed;
@@ -81,8 +131,6 @@ module	rtcclock (
 	assign	sw_sel = ((i_wb_cyc)&&(i_wb_stb)&&(i_wb_addr[2:0]==3'b010));
 	assign	al_sel = ((i_wb_cyc)&&(i_wb_stb)&&(i_wb_addr[2:0]==3'b011));
 	assign	sp_sel = ((i_wb_cyc)&&(i_wb_stb)&&(i_wb_addr[2:0]==3'b100));
-	
-	assign io_oeb = 7'b0000000000000000;
 
 	reg	[39:0]	ck_counter;
 	reg		ck_carry;

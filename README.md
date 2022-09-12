@@ -10,3 +10,6 @@
 Refer to [README](docs/source/quickstart.rst) for a quick start of how to use caravel_user_project
 
 Refer to [README](docs/source/index.rst) for this sample project documentation. 
+
+This project is a Soc based on Caravel open source project. I have added a simple little core to integrate the RTC inside the microcontroller. The Risc-V can interface with it with LA and Wishbone busses.
+My source cod is under /verilog/rtl/RTCClock.v
